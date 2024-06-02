@@ -5,6 +5,10 @@ const isDev = process.env.NODE_ENV === "development";
 const scheme = isDev ? "http" : "https";
 const endpoint = isDev ? "localhost:3003" : process.env.API_ENDPOINT;
 
+export const config = {
+  maxDuration: 60
+};
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req?.method !== "POST") {
