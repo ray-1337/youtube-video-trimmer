@@ -10,5 +10,8 @@ I also found that developers also made this before, but it's not user-friendly, 
 I use [Next.js](https://nextjs.org) and [React](https://react.dev) for the website, and [FFmpeg](https://ffmpeg.org) for the video processing. <br />
 For the server-side, please visit this [GitHub repository](https://github.com/ray-1337/youtube-trimmer-ffmpeg-server).
 
+## Trimmed Video Aftermath
+The trimmed video will be uploaded to the cloud storage. In my case, for flexible reason, I use [BunnyCDN](https://bunny.net?ref=59m0uotfa1).
+
 ## Project License
 Please see [LICENSE](LICENSE) for more information about this project license.
