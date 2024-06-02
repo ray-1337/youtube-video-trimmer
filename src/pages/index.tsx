@@ -80,6 +80,10 @@ export default function Homepage() {
       setPerfTime(Date.now() - start);
 
       if (request.status !== 200 && request.status !== 201) {
+        if (request.status === 504) {
+          return setErrorMessage(`[504] Gateway Timeout`);
+        };
+
         return setErrorMessage(`[${request.status}] ${text}`);
       };
 
