@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { Box, Flex, TextInput, NumberInput, Tooltip, Title, Button, Paper, Anchor, Alert, Text } from "@mantine/core";
 import { validateURL, getURLVideoID } from "ytdl-core";
 
-const Footer = dynamic(() => import("@/components/Footer"), { ssr: false });
+const Footer = dynamic(() => import("@/components/ui/Footer"), { ssr: false });
 
 import style from "@/styles/index.module.css";
 
