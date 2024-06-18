@@ -1,4 +1,4 @@
-# YouTube Trimmer (w/ FFMPEG)
+# YouTube Trimmer
 This is a public GitHub repository of my personal project, YouTube Trimmer.
 
 ## Motive
