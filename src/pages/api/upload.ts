@@ -174,8 +174,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           {
             InputClippings: [
               {
-                StartTimecode: secondsToColonNotation(minSecond),
-                EndTimecode: secondsToColonNotation(maxSecond)
+                StartTimecode: secondsToColonNotation(minSecond, firstRawVideoURL?.fps),
+                EndTimecode: secondsToColonNotation(maxSecond, firstRawVideoURL?.fps)
               }
             ],
 
@@ -218,6 +218,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               CodecSettings: {
                 Codec: "H_264",
                 H264Settings: {
+                  FramerateNumerator: Math.fround(firstRawVideoURL?.fps || 30),
+                  FramerateDenominator: 1,
                   RateControlMode: "VBR",
                   Bitrate: firstRawVideoURL?.bitrate || 5e+6
                 }
