@@ -1,4 +1,4 @@
-# YouTube Trimmer
+# YouTube Video Trimmer
 This is a public GitHub repository of my personal project, YouTube Trimmer.
 
 ## Motive
@@ -12,9 +12,9 @@ Mainly I use [Next.js](https://nextjs.org) and [React](https://react.dev) for th
 ## How this works?
 The YouTube video content will be pulled and temporarily stored in my S3 storage for processing. Then, the video will be processed using AWS Elemental MediaConvert.
 
-I have to store it in my S3 storage because MediaConvert doesn't support full-length URLs with parameters. I was frustrated when I discovered this, but I had no choice but to take this route.
+I have to store it in my S3 storage because MediaConvert doesn't support [full-length URLs with parameters](https://docs.aws.amazon.com/mediaconvert/latest/ug/http-input-requirements.html). I was frustrated when I discovered this, but I had no choice but to take this route.
 
-It's a bit complicated to explain the full scope of this project, especially for someone unfamiliar with AWS, but that's the basic idea.
+It's a bit complicated to explain the full scope of this project, especially for someone who unfamiliar with AWS, but that's the basic idea.
 
 To save on costs, the transcoded video will be stored in my S3 storage for about an hour, while the temporary YouTube video will be stored for a day.
 
