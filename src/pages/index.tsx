@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Box, Flex, TextInput, NumberInput, Title, Button, Paper, Anchor, Alert } from "@mantine/core";
+import { Box, Flex, TextInput, NumberInput, Button, Paper, Anchor, Alert } from "@mantine/core";
 import { validateURL, getURLVideoID } from "ytdl-core";
 
 const Footer = dynamic(() => import("@/components/ui/Footer"), { ssr: false });
+const Title = dynamic(() => import("@/components/ui/Title"), { ssr: false });
 
 import style from "@/styles/index.module.css";
 
@@ -94,9 +95,7 @@ export default function Homepage() {
     <section className={style.container}>
       <section className={style.insider}>
         <Flex direction={"column"} gap={"md"}>
-          <Box py={"md"}>
-            <Title>YouTube Trimmer</Title>
-          </Box>
+          <Title />
 
           <Flex py={"md"} gap={"xl"} direction={"column"}>
             {/* error box */}

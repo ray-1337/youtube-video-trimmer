@@ -2,7 +2,7 @@ import { type InferGetServerSidePropsType, type GetServerSidePropsContext } from
 import { type FC } from "react";
 import { useRouter } from "next/router";
 import dynamic from "next/dynamic";
-import { Flex, Box, Title, Text, Alert, Anchor, type DefaultMantineColor, Paper } from "@mantine/core";
+import { Flex, Text, Alert, Anchor, type DefaultMantineColor, Paper } from "@mantine/core";
 import { upperFirst } from "@mantine/hooks";
 import ms from "ms";
 
@@ -13,6 +13,7 @@ import S3Client from "@/components/amazon-client/S3";
 import MediaConvertClient from "@/components/amazon-client/MediaConvert";
 
 const Footer = dynamic(() => import("@/components/ui/Footer"), { ssr: false });
+const Title = dynamic(() => import("@/components/ui/Title"), { ssr: false });
 
 type ExtendedJobStatus = JobStatus | "UNKNOWN";
 
@@ -34,9 +35,7 @@ const JobStatusPage: FC<InferGetServerSidePropsType<typeof getServerSideProps>> 
     <section className={style.container}>
       <section className={style.insider}>
         <Flex direction={"column"} gap={"md"}>
-          <Box py={"md"}>
-            <Title>YouTube Trimmer</Title>
-          </Box>
+          <Title />
 
           {/* error modal */}
           {
