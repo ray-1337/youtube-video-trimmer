@@ -139,7 +139,7 @@ export default function Homepage() {
           {
             currentYouTubeID !== null && (
               <Box py={"md"} className={style["embed-container"]}>
-                <iframe src={`https://www.youtube-nocookie.com/embed/${currentYouTubeID}?controls=1&rel=0&start=${fromSecond}${toSecond >= 1 ? `&end=${toSecond}` : ""}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" />
+                <iframe src={`https://www.youtube-nocookie.com/embed/${currentYouTubeID}?controls=1&rel=0&start=${Math.round(fromSecond)}${toSecond >= 1 ? `&end=${Math.round(toSecond)}` : ""}`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" />
               </Box>
             )
           }
