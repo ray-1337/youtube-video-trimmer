@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Box, Flex, TextInput, NumberInput, Tooltip, Title, Button, Paper, Anchor, Alert, Text } from "@mantine/core";
+import { Box, Flex, TextInput, NumberInput, Title, Button, Paper, Anchor, Alert } from "@mantine/core";
 import { validateURL, getURLVideoID } from "ytdl-core";
 
 const Footer = dynamic(() => import("@/components/ui/Footer"), { ssr: false });
@@ -14,8 +14,7 @@ export default function Homepage() {
   const [currentYouTubeID, setCurrentYouTubeID] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setLoadingState] = useState<boolean>(false);
-  const [finalURL, setFinalURL] = useState<string | null>(null);
-  const [perfTime, setPerfTime] = useState<number | null>(null);
+  const [finalJobId, setFinalJobId] = useState<string | null>(null);
 
   // im so bad at this
   const [fromSecond, setFromSecond] = useState<number>(0);
@@ -49,15 +48,12 @@ export default function Homepage() {
   }, [fromSecond, toSecond]);
 
   const startRequest = async () => {
-    setFinalURL(null);
-    setPerfTime(null);
+    setFinalJobId(null);
     setErrorMessage(null);
 
     setLoadingState(true);
 
     try {
-      const start = Date.now();
-
       const request = await fetch("/api/upload", {
         mode: "cors",
 
@@ -77,8 +73,6 @@ export default function Homepage() {
 
       const text = await request.text();
 
-      setPerfTime(Date.now() - start);
-
       if (request.status !== 200 && request.status !== 201) {
         if (request.status === 504) {
           return setErrorMessage(`[504] Gateway Timeout`);
@@ -87,7 +81,7 @@ export default function Homepage() {
         return setErrorMessage(`[${request.status}] ${text}`);
       };
 
-      return setFinalURL(text);
+      return setFinalJobId(text);
     } catch (error) {
       setLoadingState(false);
       console.error(error);
@@ -108,7 +102,7 @@ export default function Homepage() {
             {/* error box */}
             {
               (errorMessage !== null) && (
-                <Alert title={"Error"} color={"red"}>
+                <Alert title={"Error"} color={"red"} variant={"filled"}>
                   { errorMessage }
                 </Alert>
               )
@@ -130,22 +124,12 @@ export default function Homepage() {
 
             {/* finalized url */}
             {
-              (finalURL !== null) && (
+              (finalJobId !== null) && (
                 <Paper shadow={"sm"} p={"md"} bd={"1px dashed black"}>
-                  <Flex justify={"space-between"} align={"center"} gap={"xl"}>
-                    <Anchor href={finalURL} target="_blank">
-                      Link Download
+                  <Flex justify={"flex-start"} align={"center"} gap={"xl"}>
+                    <Anchor href={`/status/${finalJobId}`} target="_blank">
+                      Progress Status
                     </Anchor>
-
-                    {
-                      (perfTime !== null) && (
-                        <Tooltip label={"Time processing"} withArrow>
-                          <Text size={"xs"} c={"dimmed"} style={{cursor: "default"}}>
-                            {perfTime.toLocaleString()} ms
-                          </Text>
-                        </Tooltip>
-                      )
-                    }
                   </Flex>
                 </Paper>
               )
