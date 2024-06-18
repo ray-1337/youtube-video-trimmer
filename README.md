@@ -6,12 +6,24 @@ There were funny memes that I want to clip on YouTube, but I don't have time to 
 
 I also found that developers also made this before, but it's not user-friendly, somes are unmaintained, confusing, somes going through the CLI/command line; and I really have no energy to do like the installation and stuff like that.
 
-## Dependencies
-I use [Next.js](https://nextjs.org) and [React](https://react.dev) for the website, and [FFmpeg](https://ffmpeg.org) for the video processing. <br />
-For the server-side, please visit this [GitHub repository](https://github.com/ray-1337/youtube-trimmer-ffmpeg-server).
+## Dependencies (and/or, Tools)
+Mainly I use [Next.js](https://nextjs.org) and [React](https://react.dev) for the website, and [AWS Elemental MediaConvert](https://aws.amazon.com/mediaconvert/) for the video processing.
 
-## Trimmed Video Aftermath
-The trimmed video will be uploaded to the cloud storage. In my case, for flexible reason, I use [BunnyCDN](https://bunny.net?ref=59m0uotfa1).
+## How this works?
+The YouTube video content will be pulled and temporarily stored in my S3 storage for processing. Then, the video will be processed using AWS Elemental MediaConvert.
+
+I have to store it in my S3 storage because MediaConvert doesn't support full-length URLs with parameters. I was frustrated when I discovered this, but I had no choice but to take this route.
+
+It's a bit complicated to explain the full scope of this project, especially for someone unfamiliar with AWS, but that's the basic idea.
+
+To save on costs, the transcoded video will be stored in my S3 storage for about an hour, while the temporary YouTube video will be stored for a day.
+
+## Limitations
+- Live-streaming video
+  - There's no way I can pull off a video while live-streaming.
+- Precision
+  - The timing here isn't very precise, even though you can add a decimal at the end of the number.
+    - You can trim it later with your chosen video editor.
 
 ## Project License
 Please see [LICENSE](LICENSE) for more information about this project license.
