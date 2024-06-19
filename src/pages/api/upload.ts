@@ -218,7 +218,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               CodecSettings: {
                 Codec: "H_264",
                 H264Settings: {
-                  FramerateNumerator: Math.fround(firstRawVideoURL?.fps || 30),
+                  FramerateNumerator: Math.round(firstRawVideoURL?.fps || 30),
                   FramerateDenominator: 1,
                   RateControlMode: "VBR",
                   Bitrate: firstRawVideoURL?.bitrate || 5e+6
