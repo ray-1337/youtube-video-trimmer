@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Box, Flex, TextInput, NumberInput, Button, Paper, Anchor, Alert } from "@mantine/core";
 import { validateURL, getURLVideoID } from "ytdl-core";
-import { GoogleReCaptcha } from "react-google-recaptcha-v3";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
 const Footer = dynamic(() => import("@/components/ui/Footer"), { ssr: false });
 const Title = dynamic(() => import("@/components/ui/Title"), { ssr: false });
@@ -19,14 +19,7 @@ export default function Homepage() {
   const [finalJobId, setFinalJobId] = useState<string | null>(null);
 
   // captcha session
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const [refreshReCaptcha, setRefreshReCaptcha] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (refreshReCaptcha === true) {
-      setTimeout(() => setRefreshReCaptcha(false), 50);
-    };
-  }, [refreshReCaptcha])
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   // im so bad at this
   const [fromSecond, setFromSecond] = useState<number>(0);
@@ -69,11 +62,12 @@ export default function Homepage() {
       const headers = new Headers();
       headers.append("content-type", "application/json");
 
-      if (captchaToken) {
-        headers.append("x-recaptcha-token", captchaToken);
-      } else if (!captchaToken && process.env.NODE_ENV !== "development") {
-        return setErrorMessage("Invalid Google reCAPTCHA token.");
+      if (!executeRecaptcha) {
+        return setErrorMessage("Missing Google reCAPTCHA session.");
       };
+
+      const captchaToken = await executeRecaptcha("ytfs_trim_submit");
+      headers.append("x-recaptcha-token", captchaToken);
 
       const request = await fetch("/api/upload", {
         mode: "cors", method: "POST", headers,
@@ -85,8 +79,6 @@ export default function Homepage() {
       });
 
       setLoadingState(false);
-
-      setRefreshReCaptcha(true);
 
       const text = await request.text();
 
@@ -109,13 +101,6 @@ export default function Homepage() {
 
   return (
     <section className={style.container}>
-      {/* google recaptcha (production only) */}
-      {
-        process.env.NODE_ENV !== "development" && (
-          <GoogleReCaptcha action={"ytfs__homepageLoad"} refreshReCaptcha={refreshReCaptcha} onVerify={(token) => setCaptchaToken(token)}/>
-        )
-      }
-
       <section className={style.insider}>
         <Flex direction={"column"} gap={"md"}>
           <Title />
