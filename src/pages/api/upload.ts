@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getInfo, validateURL, type getInfoOptions, getVideoID } from 'ytdl-core';
 import ms from "ms";
 import { v4 as uuidv4 } from "uuid";
+import projectConfig from '@/components/config/ProjectConfig';
+
 
 // aws import
 import { CreateJobCommand } from '@aws-sdk/client-mediaconvert';
@@ -16,10 +18,6 @@ import LambdaClient from '@/components/amazon-client/Lambda';
 // utilities
 import secondsToColonNotation from '@/components/hooks/secondsToColonNotation';
 import findAppropriateVideoFormat from "@/components/hooks/findAppropriateVideoFormat";
-
-// setup
-const maxVideoDurationNumberInMins = 30;
-const maxClippingDurationInSecs = 60;
 
 export const config = {
   maxDuration: 60
@@ -52,8 +50,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       maxSecond = Math.max(0, minSecond + 1);
     };
 
-    if (process.env.NODE_ENV !== "development" && ((maxSecond - minSecond) >= maxClippingDurationInSecs)) {
-      return res.status(413).send(`public domain only allowed to clip video up to ${maxClippingDurationInSecs} seconds.`);
+    if (process.env.NODE_ENV !== "development" && ((maxSecond - minSecond) >= projectConfig.maxClippingDurationInSecs)) {
+      return res.status(413).send(`public domain only allowed to clip video up to ${projectConfig.maxClippingDurationInSecs} seconds.`);
     };
 
     // validate if the url from the body is youtube url
@@ -101,8 +99,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const maxVideoDurationSecond = Math.round(+firstRawVideoURL.approxDurationMs / 1000);
 
     // limitation
-    if (process.env.npm_lifecycle_event === "start" && maxVideoDurationSecond >= Math.round(ms(`${maxVideoDurationNumberInMins}m`) / 1000)) {
-      return res.status(413).send(`max youtube video duration is limited to ${maxVideoDurationNumberInMins} minutes. you can self host the project if you want to increase the limit.`);
+    if (process.env.npm_lifecycle_event === "start" && maxVideoDurationSecond >= Math.round(ms(`${projectConfig.maxVideoDurationNumberInMins}m`) / 1000)) {
+      return res.status(413).send(`max youtube video duration is limited to ${projectConfig.maxVideoDurationNumberInMins} minutes. you can self host the project if you want to increase the limit.`);
     };
 
     if (maxSecond >= maxVideoDurationSecond) {
