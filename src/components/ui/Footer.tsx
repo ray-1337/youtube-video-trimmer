@@ -12,7 +12,7 @@ export default function Footer() {
     <Flex direction={"row"} gap={"md"} py={"xl"} mt={"xl"} px={"sm"} align={"center"} justify={"center"}>
       <Text c={"dimmed"} size={"sm"}>
         <Flex direction={"row"} align={"center"} gap={px(4)} wrap={"wrap"}>
-          This project is <Anchor target={"_blank"} href={"https://github.com/ray-1337/youtube-trimmer-ffmpeg"}>open-source.</Anchor> Made by <Anchor target={"_blank"} href={"https://github.com/ray-1337/"}>ray.</Anchor>
+          This project is <Anchor target={"_blank"} href={"https://github.com/ray-1337/youtube-video-trimmer"}>open-source.</Anchor> Made by <Anchor target={"_blank"} href={"https://13373333.one"}>ray.</Anchor>
 
           <Popover position="bottom" withArrow shadow="md">
             <Popover.Target>
