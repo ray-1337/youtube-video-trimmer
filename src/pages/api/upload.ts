@@ -2,8 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getInfo, validateURL, type getInfoOptions, getVideoID } from 'ytdl-core';
 import ms from "ms";
 import { v4 as uuidv4 } from "uuid";
+import { getClientIp } from "request-ip";
 import projectConfig from '@/components/config/ProjectConfig';
 
+// redis
+import redis from "@/components/redis/Client";
 
 // aws import
 import { CreateJobCommand } from '@aws-sdk/client-mediaconvert';
@@ -32,6 +35,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const body = req.body;
     if (!body?.url || typeof body?.url !== "string") {
       return res.status(400).send("youtube url is required.");
+    };
+
+    const clientIp = getClientIp(req);
+    if (!clientIp) {
+      return res.status(403).send("unable to fetch client ip for identification. try again later.");
+    };
+
+    const userSessionKey = `user_session-${clientIp}`;
+    const userSession = await redis.hmget<Record<"tries" | "lastReset", number>>(`user_session-${clientIp}`, "tries", "lastReset");
+    if (userSession !== null) {
+      if (
+        (typeof userSession.lastReset === "number" && typeof userSession.tries === "number") &&
+        (userSession.tries >= projectConfig.userRetries && (Date.now() - userSession.lastReset) <= projectConfig.sessionExpiration) 
+      ) {
+        return res.status(429).send("you are currently rate limited. try again later.");
+      };
+
+      if (typeof userSession?.lastReset === "number" && ((Date.now() - userSession.lastReset) > projectConfig.sessionExpiration)) {
+        await redis.hmset(userSessionKey, {
+          tries: 0,
+          lastReset: Date.now()
+        });
+      };
     };
   
     // { ..., duration: [0, 60] }
@@ -242,7 +268,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).send("no job id presented after transcode request.");
     };
 
-    return res.setHeader("content-type", "text/plain").send(transcodeRequest.Job.Id);
+    res.setHeader("content-type", "text/plain").send(transcodeRequest.Job.Id);
+
+    await redis.hincrby(userSessionKey, "tries", 1);
+
+    return;
   } catch (error) {
     console.error(error);
 
