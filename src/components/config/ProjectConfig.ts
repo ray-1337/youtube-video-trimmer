@@ -12,4 +12,7 @@ export default {
 
   // maximum range time of users can clip the video
   maxClippingDurationInSecs: 60,
+
+  // recaptcha
+  humanScoreThreshold: 0.5,
 };
