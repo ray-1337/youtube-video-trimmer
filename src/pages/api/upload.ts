@@ -42,6 +42,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).send("unable to fetch client ip for identification. try again later.");
     };
 
+    const captchaToken = String(req?.headers?.["x-recaptcha-token"]);
+    if (process.env.NODE_ENV !== "development") {
+      if (!captchaToken?.length) {
+        return res.status(403).send("reCAPTCHA token is mandatory.");
+      };
+
+      const endpoint = new URL("https://www.google.com/recaptcha/api/siteverify");
+
+      const secretKey = process.env.RECAPTCHA_KEY;
+      if (typeof secretKey !== "string" || !secretKey?.length) {
+        return res.status(500).send("unable to retrieve reCAPTCHA key from our ends.");
+      };
+
+      endpoint.searchParams.append("secret", secretKey);
+      endpoint.searchParams.append("response", captchaToken);
+      endpoint.searchParams.append("remoteip", clientIp);
+
+      interface GoogleReCAPTCHASiteResponse extends Record<"action" | "hostname" | "challenge_ts", string> {
+        success: boolean;
+        score: number;
+        error_codes: string[];
+      };
+
+      const request = await fetch(endpoint.toString(), {
+        method: "GET"
+      });
+
+      if (request.status !== 200) {
+        console.error(await request.text());
+        return res.status(500).send(`unable to verify reCAPTCHA session from our end. [${request.status}]`);
+      };
+
+      const json = await request.json() as GoogleReCAPTCHASiteResponse;
+      if (!json.success) {
+        if (Array.isArray(json?.error_codes) && json?.error_codes.length) {
+          console.error(json.error_codes);
+        };
+
+        return res.status(500).send("unable to verify reCAPTCHA session from our end.")
+      };
+
+      if (json.score < projectConfig.humanScoreThreshold) {
+        return res.status(403).send("i don't think that you're a human enough to use this website.");
+      };
+    };
+
     const userSessionKey = `user_session-${clientIp}`;
     const userSession = await redis.hmget<Record<"tries" | "lastReset", number>>(`user_session-${clientIp}`, "tries", "lastReset");
     if (userSession !== null) {
