@@ -10,7 +10,7 @@ import redis from "@/components/redis/Client";
 
 // aws import
 import { CreateJobCommand } from '@aws-sdk/client-mediaconvert';
-import { HeadObjectCommand } from '@aws-sdk/client-s3';
+import { HeadObjectCommand, type HeadObjectCommandInput } from '@aws-sdk/client-s3';
 import { InvokeCommand } from "@aws-sdk/client-lambda";
 
 // aws client import
@@ -167,17 +167,17 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
       return res.status(500).send("unable to fetch the data of the current youtube url.");
     };
 
-    const firstRawVideoURL = findAppropriateVideoFormat(data.formats);
-    if (!firstRawVideoURL?.url?.length || !firstRawVideoURL?.mimeType?.length) {
+    const firstRawVideoURL = findAppropriateVideoFormat(data.formats, body?.quality);
+    if (!firstRawVideoURL?.video?.url?.length || !firstRawVideoURL?.video?.mimeType?.length) {
       return res.status(500).send("unable to fetch video after filter.");
     };
 
-    if (!firstRawVideoURL?.approxDurationMs?.length) {
+    if (!firstRawVideoURL?.video?.approxDurationMs?.length) {
       return res.status(500).send("the current youtube video has no duration to check.");
     };
 
     // resetting the duration
-    const maxVideoDurationSecond = Math.round(+firstRawVideoURL.approxDurationMs / 1000);
+    const maxVideoDurationSecond = Math.round(+firstRawVideoURL.video.approxDurationMs / 1000);
 
     // limitation
     if (process.env.npm_lifecycle_event === "start" && maxVideoDurationSecond >= Math.round(ms(`${projectConfig.maxVideoDurationNumberInMins}m`) / 1000)) {
@@ -194,19 +194,26 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
 
     // find videos on temp
     const baseUrlTempVideoPath: string = `temp_videos/${videoId}/${videoId}.mp4`;
+    const baseUrlTempAudioPath: string = `temp_videos/${videoId}/${videoId}.webm`;
 
     try {
-      const videoTempFindCommand = new HeadObjectCommand({
-        Bucket: bucketName,
-        Key: baseUrlTempVideoPath
-      });
+      const obj: Omit<HeadObjectCommandInput, "Key"> = {
+        Bucket: bucketName
+      };
 
-      await S3Client.send(videoTempFindCommand);
+      await Promise.all([
+        S3Client.send(new HeadObjectCommand({ ...obj, Key: baseUrlTempVideoPath })),
+        S3Client.send(new HeadObjectCommand({ ...obj, Key: baseUrlTempAudioPath }))
+      ]);
     } catch {
       const invokeCommand = new InvokeCommand({
         FunctionName: process.env.YT_TRIMMER_LAMBDA_FUNC_NAME,
         Payload: JSON.stringify({
-          videoUrl: firstRawVideoURL.url, videoId
+          // video
+          videoUrl: firstRawVideoURL.video.url, videoId,
+
+          // audio
+          audioUrl: firstRawVideoURL?.audio?.url || null
         })
       });
 
@@ -253,8 +260,8 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
           {
             InputClippings: [
               {
-                StartTimecode: secondsToColonNotation(minSecond, firstRawVideoURL?.fps),
-                EndTimecode: secondsToColonNotation(maxSecond, firstRawVideoURL?.fps)
+                StartTimecode: secondsToColonNotation(minSecond, firstRawVideoURL?.video?.fps),
+                EndTimecode: secondsToColonNotation(maxSecond, firstRawVideoURL?.video?.fps)
               }
             ],
 
@@ -262,7 +269,10 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
             FileInput: `s3://${bucketName}/${baseUrlTempVideoPath}`,
             AudioSelectors: {
               "Audio Selector 1": {
-                DefaultSelection: "DEFAULT"
+                DefaultSelection: "DEFAULT",
+
+                // so ugly
+                ExternalAudioFileInput: firstRawVideoURL?.audio !== null ? `s3://${bucketName}/${baseUrlTempAudioPath}` : undefined
               }
             }
           }
@@ -286,9 +296,9 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
               CodecSettings: {
                 Codec: "AAC",
                 AacSettings: {
-                  Bitrate: +(firstRawVideoURL?.audioBitrate || 128) * 1000,
+                  Bitrate: +(firstRawVideoURL?.video?.audioBitrate || firstRawVideoURL?.audio?.audioBitrate || 128) * 1000,
                   CodingMode: "CODING_MODE_2_0",
-                  SampleRate: +(firstRawVideoURL?.audioSampleRate || 44100)
+                  SampleRate: +(firstRawVideoURL?.video?.audioSampleRate || firstRawVideoURL?.audio?.audioBitrate || 44100)
                 }
               }
             }],
@@ -297,10 +307,10 @@ export default async function handler(req: ExtendedNextApiRequest, res: NextApiR
               CodecSettings: {
                 Codec: "H_264",
                 H264Settings: {
-                  FramerateNumerator: Math.round(firstRawVideoURL?.fps || 30),
+                  FramerateNumerator: Math.round(firstRawVideoURL?.video?.fps || 30),
                   FramerateDenominator: 1,
                   RateControlMode: "VBR",
-                  Bitrate: firstRawVideoURL?.bitrate || 5e+6
+                  Bitrate: firstRawVideoURL?.video?.bitrate || 5e+6
                 }
               }
             },
