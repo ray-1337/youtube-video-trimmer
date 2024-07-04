@@ -1,21 +1,66 @@
 import type { videoFormat } from "ytdl-core";
 
-export default function findAppropriateVideoFormat(formats: videoFormat[]): videoFormat | null {
-  const liteFilteredFormats = formats.filter(format => format.hasAudio && format.hasVideo && !format.isLive && !format.isHLS);
+interface AppropriateContentFormatResult {
+  video: videoFormat;
+  audio: videoFormat | null;
+};
 
-  // the highest quality you can get (video w/ audio) is hd720, maybe there will be a workaround in the future
-  const filteredFormats = liteFilteredFormats.filter(format => format.quality === "medium" || format.quality === "hd720");
+export default function findAppropriateContentFormat(formats: videoFormat[], quality: string = "medium"): AppropriateContentFormatResult | null {
+  switch (quality.toLowerCase()) {
+    // highest format possible, sorted by bitrate
+    case "highest": {
+      // highest video filter
+      const highestVideoForm = formats
+      .filter(val => (val.hasVideo === true && val.hasAudio === false))
+      .sort((a, b) => (b?.bitrate || 0) - (a?.bitrate || 0));
 
-  let highestFormat = filteredFormats.find(format => format.quality === "hd720");
+      const highestVideo = highestVideoForm?.[0];
 
-  if (!highestFormat) {
-    const lowest = filteredFormats.find(format => format.quality === "medium");
-    if (!lowest) {
-      return null;
+      if (!highestVideoForm?.length || !highestVideo) {
+        return null;
+      };
+
+      // highest audio filter, sorted by bitrate, webm/opus needed
+      const highestAudioForm = formats
+      .filter(val => (val.hasVideo === false && val.hasAudio === true && val.codecs === "opus"))
+      .sort((a, b) => (b?.bitrate || 0) - (a?.bitrate || 0));
+
+      const highestAudio = highestAudioForm?.[0];
+
+      if (!highestAudioForm?.length || !highestAudio) {
+        return null;
+      };
+
+      return {
+        video: highestVideo,
+        audio: highestAudio
+      };
     };
 
-    highestFormat = lowest;
-  };
+    // medium/auto quality
+    case "medium": {
+      const liteFilteredFormats = formats.filter(format => format.hasAudio && format.hasVideo && !format.isLive && !format.isHLS);
+      const filteredFormats = liteFilteredFormats.filter(format => format.quality === "medium" || format.quality === "hd720");
 
-  return highestFormat;
+      let highestFormat = filteredFormats.find(format => format.quality === "hd720");
+
+      if (!highestFormat) {
+        const lowest = filteredFormats.find(format => format.quality === "medium");
+        if (!lowest) {
+          return null;
+        };
+
+        highestFormat = lowest;
+      };
+
+      return {
+        video: highestFormat,
+        audio: null
+      };
+    };
+
+    default: {
+      return null;
+    };
+  };
 };
