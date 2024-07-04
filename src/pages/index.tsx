@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Box, Flex, TextInput, NumberInput, Button, Paper, Anchor, Alert } from "@mantine/core";
+import { Box, Flex, TextInput, Select, NumberInput, Button, Paper, Anchor, Alert } from "@mantine/core";
 import { validateURL, getURLVideoID } from "ytdl-core";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
@@ -13,6 +13,7 @@ const [minDuration, maxDuration] = [0, 43200];
 
 export default function Homepage() {
   const [urlInput, setUrlInput] = useState<string | null>(null);
+  const [qualityVideo, setQualityVideo] = useState<string | null>(null);
   const [currentYouTubeID, setCurrentYouTubeID] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setLoadingState] = useState<boolean>(false);
@@ -74,7 +75,8 @@ export default function Homepage() {
 
         body: JSON.stringify({
           url: `https://youtu.be/${currentYouTubeID}`,
-          duration: [fromSecond, toSecond]
+          duration: [fromSecond, toSecond],
+          quality: qualityVideo
         })
       });
 
@@ -123,6 +125,17 @@ export default function Homepage() {
 
               <NumberInput disabled={isLoading} ref={toRef} label={"End (seconds)"} hideControls value={toSecond} min={(fromSecond + 1) || 0} max={maxDuration} placeholder={"43200"} onBlur={(event) => setToSecond(+event.currentTarget.value || 0)}/>
             </Flex>
+
+            {/* quality selector */}
+            <Select
+              label="Quality Trim"
+              description={"If there is no options selected or no quality available above 720p, 'Medium' will be in use."}
+              onChange={setQualityVideo}
+              data={[
+                { label: "Highest possible (720p - 4k)", value: "highest" },
+                { label: "Medium (< 720p)", value: "medium" }
+              ]}
+            />
 
             {/* trim button */}
             <Button onClick={startRequest} disabled={typeof fromSecond !== "number" || typeof toSecond !== "number" || (fromSecond <= 0 && toSecond <= 0)} loading={isLoading}>
