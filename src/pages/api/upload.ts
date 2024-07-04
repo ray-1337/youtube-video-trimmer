@@ -26,7 +26,16 @@ export const config = {
   maxDuration: 60
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+interface ExtendedNextApiRequest extends NextApiRequest {
+  body: {
+    url: string;
+    duration: [number, number];
+
+    quality?: string;
+  };
+};
+
+export default async function handler(req: ExtendedNextApiRequest, res: NextApiResponse) {
   try {
     if (req?.method !== "POST") {
       return res.status(400).send("invalid request method.");
